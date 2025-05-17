@@ -26,6 +26,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sanity": "^3.88.3",
+    "sanity-plugin-markdown": "^5.1.0",
     "shadcn": "^2.4.0-canary.17",
     "styled-components": "^6.1.18",
     "tailwind-merge": "^3.0.2",
