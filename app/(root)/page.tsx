@@ -14,7 +14,7 @@ export default async function Home({
 		author: { _id: 1, name: "test" },
 		_id: 1,
 		description: 'This is description',
-		image: '',
+		image: 'https://bookclub.ua/images/db/goods/63258_127622.jpg',
 		category: "Robots",
 		title: "We Robots" 
 	}];
