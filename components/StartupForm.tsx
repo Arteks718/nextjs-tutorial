@@ -9,12 +9,13 @@ import { formSchema } from "@/lib/validation";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { createPitch } from "@/lib/actions";
 
 const StartupForm = () => {
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [pitch, setPitch] = useState<string>("");
-  const { toast } = useToast();
-  const router = useRouter()
+	const { toast } = useToast();
+	const router = useRouter();
 
 	const handleSubmit = async (prevState: any, formData: FormData) => {
 		try {
@@ -28,48 +29,50 @@ const StartupForm = () => {
 
 			await formSchema.parseAsync(formValues);
 
-      console.log(formValues)
+			const result = await createPitch(prevState, formData, pitch);
 
-			// const result = await createIdea(prevState, formValues, pitch)
-			// console.log(result)
-
-      // if(result.status == 'SUCCESS'){
-      //   toast({
-      //     title: "Startup Submitted",
-      //     description: "Your startup has been successfully submitted!",
-      //     variant: "success",
-      //   });
-      // }
-      // router.push(`/startup/${result.id}`);
-      // return result
+			if (result.status == "SUCCESS") {
+				toast({
+					title: "Startup Submitted",
+					description: "Your startup has been successfully submitted!",
+				});
+				router.push(`/startup/${result._id}`);
+			}
+			return result;
 		} catch (error) {
-      if(error instanceof z.ZodError) {
-        const fieldErrors = error.flatten().fieldErrors;
-        setErrors(fieldErrors as unknown as Record<string, string>);
+			if (error instanceof z.ZodError) {
+				const fieldErrors = error.flatten().fieldErrors;
+				setErrors(fieldErrors as unknown as Record<string, string>);
 
         toast({
-          title: "Validation Error",
-          description: "Please fix the errors in the form.",
           variant: "destructive",
+          title: "Uh oh! Something went wrong.",
+          description: "There was a problem with your request.",
         })
 
-        return { ...prevState, error: "Validation failed", status: "ERROR" };
-      }
+				return {
+					...prevState,
+					error: "Validation failed",
+					status: "ERROR",
+					payload: formData,
+				};
+			}
 
-      toast({
-        title: "Validation Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      })
-      return {
-        ...prevState,
-        error: "An unexpected error occurred",
-        status: "ERROR",
-      }
+			toast({
+				variant: "destructive",
+				title: "Error",
+				description: "An unexpected error occurred",
+			});
+			return {
+				...prevState,
+				error: "An unexpected error occurred",
+				status: "ERROR",
+				payload: formData,
+			};
 		}
 	};
 
-	const [state, formAction, isPending] = useActionState(handleSubmit, {
+	const [actionState, formAction, isPending] = useActionState(handleSubmit, {
 		error: "",
 		status: "INITIAL",
 	});
@@ -86,6 +89,7 @@ const StartupForm = () => {
 					className='startup-form_input'
 					required
 					placeholder='Startup Title'
+					defaultValue={actionState.payload?.get("title") || ""}
 				/>
 				{errors.title && <p className='startup-form_error'>{errors.title}</p>}
 			</div>
@@ -100,6 +104,7 @@ const StartupForm = () => {
 					className='startup-form_textarea'
 					required
 					placeholder='Startup Description'
+					defaultValue={actionState.payload?.get("description") || ""}
 				/>
 				{errors.description && (
 					<p className='startup-form_error'>{errors.description}</p>
@@ -116,6 +121,7 @@ const StartupForm = () => {
 					className='startup-form_input'
 					required
 					placeholder='Startup Category (Tech, Health, etc.)'
+					defaultValue={actionState.payload?.get("category") || ""}
 				/>
 				{errors.category && (
 					<p className='startup-form_error'>{errors.category}</p>
@@ -132,6 +138,7 @@ const StartupForm = () => {
 					className='startup-form_input'
 					required
 					placeholder='Startup Image URL'
+					defaultValue={actionState.payload?.get("link") || ""}
 				/>
 				{errors.link && <p className='startup-form_error'>{errors.link}</p>}
 			</div>
